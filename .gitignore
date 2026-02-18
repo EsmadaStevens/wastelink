@@ -140,6 +140,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!mobile_app/lib/
 lib64/
 parts/
 sdist/
