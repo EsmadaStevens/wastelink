@@ -1,7 +1,7 @@
 {
   "development": {
       "username": "root",
-      "password": "Tawakalitu5#",
+      "password": "",
       "database": "wastelink",
       "host": "localhost",
       "dialect": "mysql"
