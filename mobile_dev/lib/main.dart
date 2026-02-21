@@ -1,34 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:wastelink/pages/auth_check_screen.dart';
+import 'package:wastelink/pages/forgot_password.dart';
+import 'package:wastelink/pages/home_screen.dart';
 import 'package:wastelink/pages/login.dart';
 import 'package:wastelink/pages/onboarding.dart';
 import 'package:wastelink/pages/signup.dart';
-import 'package:wastelink/pages/profile_screen.dart';
-import 'package:wastelink/pages/dashboard_screen.dart';
-void main() => runApp(const WasteLinkApp());
+import 'package:wastelink/pages/log_waste_step1_screen.dart';
+import 'package:wastelink/pages/log_waste_step2_screen.dart';
+import 'package:wastelink/pages/log_waste_step3_screen.dart';
 
-class WasteLinkApp extends StatelessWidget {
-  const WasteLinkApp({super.key});
+void main() {
+  // Ensures that plugin services are initialized before `runApp()`
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'WasteLink',
-      debugShowCheckedModeBanner : false,
+      debugShowCheckedModeBanner: false,
+      title: 'Wastelink',
       theme: ThemeData(
         primarySwatch: Colors.green,
         useMaterial3: true,
-        inputDecorationTheme: const InputDecorationTheme(
-          border: OutlineInputBorder(),
-          filled: true,
-        ),
       ),
-      initialRoute: '/onboarding',
+      initialRoute: '/',
       routes: {
-        '/onboarding': (context) => const OnboardingScreen(),
+        '/': (context) => const AuthCheckScreen(),
         '/login': (context) => const LoginScreen(),
+        '/home': (context) => const HomeScreen(),
         '/signup': (context) => const SignupScreen(),
-        '/profile_setup': (context) => const ProfileScreen(),
-        '/dashboard': (context) => const DashboardScreen(),
+        '/onboarding': (context) => const OnboardingScreen(),
+        '/forgot_password': (context) => const ForgotPassword(),
+        '/log_waste_step1': (context) => const LogWasteStep1Screen(),
+        '/log_waste_step2': (context) => const LogWasteStep2Screen(),
+        '/log_waste_step3': (context) => const LogWasteStep3Screen(),
       },
     );
   }
