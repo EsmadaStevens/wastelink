@@ -124,7 +124,7 @@ class _LogWasteStep2ScreenState extends State<LogWasteStep2Screen> {
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                           color: Colors.grey.shade200,
-                          style: BorderStyle.solid), // Dashed border needs custom painter
+                          style: BorderStyle.solid), 
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -132,7 +132,7 @@ class _LogWasteStep2ScreenState extends State<LogWasteStep2Screen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF006442).withOpacity(0.1),
+                            color: const Color(0xFF006442).withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.photo_camera,
