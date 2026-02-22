@@ -133,4 +133,17 @@ async function login({ email, password }) {
     }
   };
 }
-module.exports = { signup, verifyOtp, resendOtp, login };
+
+//getUser
+async function getAllUsers() {
+  try {
+    const users = await User.findAll({
+      attributes: { exclude: ['password'] } // optional: exclude sensitive data
+    });
+    return users;
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    throw error;
+  }
+}  
+module.exports = { signup, verifyOtp, resendOtp, login, getAllUsers };

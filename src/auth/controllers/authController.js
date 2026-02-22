@@ -1,4 +1,4 @@
-const { signup, verifyOtp, resendOtp, login } = require('../services/authService');
+const { signup, verifyOtp, resendOtp, login, getAllUsers } = require('../services/authService');
 
 
 async function signupController(req, res) {
@@ -43,6 +43,23 @@ async function loginController(req, res) {
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
-}
+};
 
-module.exports = { signupController, verifyOtpController, resendOtpController, loginController };
+//getUser
+async function getAllUsersController(req, res) {
+  try {
+    const users = await getAllUsers();
+    return res.status(200).json({
+      status: 'success',
+      results: users.length,
+      data: users
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch users',
+      error: error.message
+    });
+  }
+}
+module.exports = { signupController, verifyOtpController, resendOtpController, loginController, getAllUsersController };
