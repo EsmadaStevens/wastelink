@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'pages/auth_check_screen.dart';
-import 'pages/onboarding.dart';
+import 'pages/onboarding_screen.dart';
 import 'pages/login_screen.dart';
 import 'pages/signup_screen.dart';
 import 'pages/forgot_password_screen.dart';
@@ -15,9 +15,9 @@ import 'pages/sme/reward_redemption_screen.dart';
 import 'pages/sme/reward_success_screen.dart';
 import 'pages/sme/account_settings_screen.dart';
 import 'pages/sme/notifications_screen.dart';
-import 'pages/sme/log_waste/log_waste_step1_screen.dart';
-import 'pages/sme/log_waste/log_waste_step2_screen.dart';
-import 'pages/sme/log_waste/log_waste_step3_screen.dart';
+import 'pages/sme/log_waste_step1_screen.dart';
+import 'pages/sme/log_waste_step2_screen.dart';
+import 'pages/sme/log_waste_step3_screen.dart';
 import 'pages/collector/collector_main_screen.dart';
 import 'pages/collector/collector_job_details_screen.dart';
 import 'pages/collector/collector_job_accepted_screen.dart';
@@ -44,6 +44,7 @@ class WasteLinkApp extends StatelessWidget {
       ),
       home: const AuthCheckScreen(),
       routes: {
+        // Auth Flow
         '/onboarding': (context) => const OnboardingScreen(),
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),
@@ -51,6 +52,8 @@ class WasteLinkApp extends StatelessWidget {
         '/otp_verification': (context) => const OtpVerificationScreen(),
         '/reset_password': (context) => const ResetPasswordScreen(),
         '/password_changed_success': (context) => const PasswordChangedSuccessScreen(),
+
+        // SME Flow
         '/home': (context) => const SmeMainScreen(),
         '/sme_pickup': (context) => const SmePickupScreen(),
         '/sme_pickup_tracking': (context) => const SmePickupTrackingScreen(),
@@ -62,6 +65,8 @@ class WasteLinkApp extends StatelessWidget {
         '/log_waste_step1': (context) => const LogWasteStep1Screen(),
         '/log_waste_step2': (context) => const LogWasteStep2Screen(),
         '/log_waste_step3': (context) => const LogWasteStep3Screen(),
+
+        // Collector Flow
         '/collector_home': (context) => const CollectorMainScreen(),
         '/collector_job_details': (context) => const CollectorJobDetailsScreen(),
         '/collector_job_accepted': (context) => const CollectorJobAcceptedScreen(),
