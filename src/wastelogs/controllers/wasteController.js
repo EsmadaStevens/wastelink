@@ -1,4 +1,4 @@
-const { WasteLog } = require("../../models");
+const { WasteLog } = require("../../../models");
 
 const ALLOWED_CATEGORIES = [
   "Plastic",
@@ -7,6 +7,7 @@ const ALLOWED_CATEGORIES = [
   "Glass",
   "Electronic"
 ];
+
 
 const ALLOWED_VOLUMES = [
   "Small",
