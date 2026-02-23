@@ -1,36 +1,63 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
-// import 'package:http/http.dart' as http; // Commented out for now
-import 'secure_storage_service.dart';
+import 'package:http/http.dart' as http;
 
 class ApiService {
-  // Singleton pattern
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
   ApiService._internal();
 
-  // static const String baseUrl = 'http://10.0.2.2:6000/api'; // Commented out
+  // REAL BACKEND URL
+  static const String baseUrl = 'https://wastelink-production.up.railway.app';
 
-  /// Helper method to create authenticated headers.
-  Future<Map<String, String>> _getAuthHeaders() async {
-    final token = await SecureStorageService().getAuthToken();
-    return {
-      'Content-Type': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
-    };
+  // --- MOCK TEST CREDENTIALS ---
+  static const String mockSmeEmail = 'sme@test.com';
+  static const String mockCollectorEmail = 'collector@test.com';
+  static const String mockPassword = 'password123';
+
+  /// Sign In with Email and Password
+  Future<Map<String, dynamic>?> signInWithEmail(String email, String password) async {
+    // 1. MOCK LOGIC: Check for test accounts first
+    if (email == mockSmeEmail && password == mockPassword) {
+      await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
+      return {
+        'token': 'mock_sme_token_12345',
+        'role': 'SME',
+        'user': {'name': 'Test SME User', 'email': email, 'lga': 'Obafemi Owode', 'points': 1240, 'phone': '+2348012345678'}
+      };
+    }
+
+    if (email == mockCollectorEmail && password == mockPassword) {
+      await Future.delayed(const Duration(seconds: 1));
+      return {
+        'token': 'mock_collector_token_67890',
+        'role': 'Collector',
+        'user': {'name': 'Test Collector User', 'email': email, 'lga': 'Obafemi Owode', 'points': 850, 'phone': '+2348098765432'}
+      };
+    }
+
+    // 2. REAL LOGIC: Call the backend
+    try {
+      final url = Uri.parse('$baseUrl/api/auth/login');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return null;
+      }
+    } catch (e) {
+      return null;
+    }
   }
 
-  /// Fetches the user's profile to validate an existing token.
-  Future<Map<String, dynamic>?> getUserProfile() async {
-    // MOCK RESPONSE
-    await Future.delayed(const Duration(milliseconds: 500)); // Simulate network delay
-    return {
-      'name': 'Test User',
-      'email': 'test@example.com',
-      'role': 'User',
-    };
-  }
-
+  /// Sign Up with Email
   Future<bool> signUpWithEmail({
     required String name,
     required String email,
@@ -38,59 +65,93 @@ class ApiService {
     required String role,
     required String lga,
   }) async {
-    // MOCK RESPONSE
-    await Future.delayed(const Duration(milliseconds: 1000));
-    debugPrint("✅ Mock Sign-up successful for $email");
-    return true;
+    try {
+      final url = Uri.parse('$baseUrl/api/auth/signup');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'name': name,
+          'email': email,
+          'password': password,
+          'role': role,
+          'lga': lga,
+        }),
+      );
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      return false;
+    }
   }
 
-  Future<Map<String, dynamic>?> signInWithEmail(String email, String password) async {
-    // MOCK RESPONSE
-    await Future.delayed(const Duration(milliseconds: 1000));
-    debugPrint("✅ Mock Sign-in successful");
-    return {
-      'token': 'mock_token_12345',
-      'user': {
-        'name': 'Test User',
-        'email': email,
-      }
-    };
-  }
-  
+  /// Google Auth (Mocked for now)
   Future<Map<String, dynamic>?> googleAuth({
     required String email,
     required String name,
     required String googleId,
     String? photoUrl,
   }) async {
-    // MOCK RESPONSE
-    await Future.delayed(const Duration(milliseconds: 1000));
+    await Future.delayed(const Duration(seconds: 1));
     return {
-      'token': 'mock_google_token_12345',
-      'user': {
-        'name': name,
-        'email': email,
-        'photoUrl': photoUrl,
+      'token': 'mock_google_token',
+      'role': 'SME',
+    };
+  }
+
+  /// Send OTP for Password Reset
+  Future<bool> sendOtp(String email) async {
+    await Future.delayed(const Duration(seconds: 1));
+    return true;
+  }
+
+  /// Verify OTP
+  Future<bool> verifyOtp(String email, String otp) async {
+    await Future.delayed(const Duration(seconds: 1));
+    return otp.length == 6;
+  }
+
+  /// Reset Password
+  Future<bool> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    await Future.delayed(const Duration(seconds: 1));
+    return true;
+  }
+
+  /// Log Waste Data
+  Future<bool> logWaste({
+    required String wasteType,
+    required String quantity,
+    required String location,
+    required String date,
+    String? imagePath,
+  }) async {
+    await Future.delayed(const Duration(seconds: 1));
+    return true;
+  }
+
+  /// Request a waste pickup
+  Future<Map<String, dynamic>?> requestPickup({
+    required String date,
+    required String timeSlot,
+  }) async {
+    await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
+    return {
+      'pickupId': 'pickup_${DateTime.now().millisecondsSinceEpoch}',
+      'status': 'Assigned', // Initial status
+      'collector': {
+        'name': 'Adewale Okonjo',
+        'phone': '+2348012345678',
+        'rating': '4.8',
       }
     };
   }
 
-  Future<bool> sendOtp(String email) async {
-    // MOCK RESPONSE
-    await Future.delayed(const Duration(milliseconds: 1000));
-    return true;
-  }
-
-  Future<bool> verifyOtp(String email, String otp) async {
-    // MOCK RESPONSE
-    await Future.delayed(const Duration(milliseconds: 1000));
-    // Accept any 6 digit OTP for testing
-    return otp.length == 6;
-  }
-
-  Future<bool> resetPassword(String email, String newPassword) async {
-    // MOCK RESPONSE
-    await Future.delayed(const Duration(milliseconds: 1000));
+  /// Redeem a reward
+  Future<bool> redeemReward({required String rewardId, required int pointsCost}) async {
+    await Future.delayed(const Duration(seconds: 2));
     return true;
   }
 }

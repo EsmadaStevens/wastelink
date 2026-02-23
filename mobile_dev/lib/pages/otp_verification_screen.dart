@@ -3,11 +3,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:pinput/pinput.dart';
 import '../services/api_service.dart';
-import 'reset_password_screen.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
-  final String email;
-  const OtpVerificationScreen({super.key, required this.email});
+  const OtpVerificationScreen({super.key});
 
   @override
   State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
@@ -18,8 +16,20 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   Timer? _timer;
   int _secondsRemaining = 120;
   bool _isVerifying = false;
+  String? _email;
 
   bool get _isResendActive => _secondsRemaining == 0;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_email == null) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is String) {
+        _email = args;
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -57,8 +67,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   }
 
   void _handleResendOtp() async {
-    if (_isResendActive) {
-      final success = await ApiService().sendOtp(widget.email);
+    if (_isResendActive && _email != null) {
+      final success = await ApiService().sendOtp(_email!);
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -72,19 +82,20 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   }
 
   void _handleVerifyOtp() async {
-    if (_otpController.text.length != 6) return;
+    if (_otpController.text.length != 6 || _email == null) return;
 
     setState(() => _isVerifying = true);
 
-    final success = await ApiService().verifyOtp(widget.email, _otpController.text);
+    final success = await ApiService().verifyOtp(_email!, _otpController.text);
 
     if (mounted) {
       setState(() => _isVerifying = false);
       if (success) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => ResetPasswordScreen(email: widget.email),
-          ),
+        // Navigate to Reset Password, passing email and OTP (token)
+        Navigator.pushReplacementNamed(
+          context, 
+          '/reset_password', 
+          arguments: {'email': _email, 'otp': _otpController.text}
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -126,20 +137,21 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Image.asset('images/forgot_password_email.png', height: 200),
+              Image.asset('assets/images/forgot_password_email.png', height: 200),
               const SizedBox(height: 32),
               const Text("Verify Email", style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF064E3B), fontFamily: 'Serif')),
               const SizedBox(height: 16),
-              Text.rich(
-                TextSpan(
-                  style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                  children: [
-                    const TextSpan(text: "An OTP has been sent to "),
-                    TextSpan(text: _maskEmail(widget.email), style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                  ],
+              if (_email != null)
+                Text.rich(
+                  TextSpan(
+                    style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                    children: [
+                      const TextSpan(text: "An OTP has been sent to "),
+                      TextSpan(text: _maskEmail(_email!), style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
               const SizedBox(height: 32),
               Pinput(
                 length: 6,
