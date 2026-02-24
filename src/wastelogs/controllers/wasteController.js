@@ -19,7 +19,7 @@ const ALLOWED_VOLUMES = [
 
 const createWasteLog = async (req, res) => {
   try {
-    const { category, volume, location } = req.body;
+    const { category, volume, location, lga } = req.body;
 
     // Validate category
     if (!ALLOWED_CATEGORIES.includes(category)) {
@@ -43,6 +43,7 @@ const createWasteLog = async (req, res) => {
       category,
       volume,
       location,
+      lga: req.user.lga,
       userId: req.user.id // attach authenticated user
     });
 
@@ -65,7 +66,7 @@ const createWasteLog = async (req, res) => {
 //getWasteLogs
 const getWasteLogs = async (req, res) => {
   try {
-    const { category, volume } = req.query;
+    const { category, volume, lga } = req.query;
 
     let whereClause = {};
 
@@ -81,6 +82,10 @@ const getWasteLogs = async (req, res) => {
 
     if (volume) {
       whereClause.volume = volume;
+    }
+
+    if (lga) {
+      whereClause.lga = lga;
     }
 
     const logs = await WasteLog.findAll({ where: whereClause });

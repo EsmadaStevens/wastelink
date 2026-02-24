@@ -21,6 +21,10 @@ module.exports = (sequelize, DataTypes) => {
       photoUrl: DataTypes.STRING,
       status: DataTypes.STRING,
       valueEstimate: DataTypes.FLOAT,
+      lga: {               // <-- add this
+      type: DataTypes.STRING,
+      allowNull: false,  // require every waste log to have an LGA
+    },
     },
     {
       sequelize,

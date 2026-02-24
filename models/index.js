@@ -37,8 +37,18 @@ Object.keys(db).forEach(modelName => {
     db[modelName].associate(db);
   }
 });
+// === CUSTOM ASSOCIATIONS START ===
+// PickupRequest <-> WasteLog
+db.PickupRequest.belongsTo(db.WasteLog);
+db.WasteLog.hasOne(db.PickupRequest);
+
+// PickupRequest <-> User (collector)
+db.PickupRequest.belongsTo(db.User, { foreignKey: "collectorId", as: "assignedCollector" });
+db.User.hasMany(db.PickupRequest, { foreignKey: "collectorId", as: "assignedPickups" });
+// === CUSTOM ASSOCIATIONS END ===
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
 module.exports = db;
+
