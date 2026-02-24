@@ -8,8 +8,10 @@ const { createWasteLog, getWasteLogs, getWasteById } = require("../../wastelogs/
 router.post("/create-waste",authenticate, authorize("SME"), createWasteLog);
 
 //get waste logs with optional filters
-router.get("/view-waste", authenticate, getWasteLogs);
+// router.get("/view-waste", authenticate, getWasteLogs);
+router.get("/view-waste", getWasteLogs);
 //get waste log by id
-router.get("/view-waste/:id", authenticate, getWasteById);
+// router.get("/view-waste/:id", authenticate, getWasteById);
+router.get("/view-waste/:id", getWasteById);
 
 module.exports = router;
