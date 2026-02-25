@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association 
+      // define association
       WasteLog.belongsTo(models.User, { foreignKey: "userId" });
       models.User.hasMany(WasteLog, { foreignKey: "userId" });
     }
@@ -21,10 +21,20 @@ module.exports = (sequelize, DataTypes) => {
       photoUrl: DataTypes.STRING,
       status: DataTypes.STRING,
       valueEstimate: DataTypes.FLOAT,
-      lga: {               // <-- add this
-      type: DataTypes.STRING,
-      allowNull: false,  // require every waste log to have an LGA
-    },
+      lga: {
+        // <-- add this
+        type: DataTypes.STRING,
+        allowNull: false, // require every waste log to have an LGA
+      },
+      imageUrl: {
+        type: DataTypes.STRING,
+      },
+      aiPrediction: {
+        type: DataTypes.STRING,
+      },
+      aiConfidence: {
+        type: DataTypes.FLOAT,
+      },
     },
     {
       sequelize,

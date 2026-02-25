@@ -1,3 +1,6 @@
+const axios = require("axios");
+const FormData = require("form-data");
+const fs = require("fs");
 const { WasteLog } = require("../../../models");
 
 const ALLOWED_CATEGORIES = [
@@ -17,51 +20,94 @@ const ALLOWED_VOLUMES = [
 ];
 
 
+// const createWasteLog = async (req, res) => {
+//   try {
+//     const { category, volume, location, lga } = req.body;
+
+//     // Validate category
+//     if (!ALLOWED_CATEGORIES.includes(category)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Validation error",
+//         reason: `Category must be one of: ${ALLOWED_CATEGORIES.join(", ")}`
+//       });
+//     }
+
+//     // Validate volume
+//     if (!ALLOWED_VOLUMES.includes(volume)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Validation error",
+//         reason: `Volume must be one of: ${ALLOWED_VOLUMES.join(", ")}`
+//       });
+//     }
+
+//     const wasteLog = await WasteLog.create({
+//       category,
+//       volume,
+//       location,
+//       lga: req.user.lga,
+//       userId: req.user.id // attach authenticated user
+//     });
+
+//     return res.status(201).json({
+//       success: true,
+//       message: "Waste logged successfully",
+//       data: wasteLog,
+//       loggedBy: req.user.role
+//     });
+
+//   } catch (error) {
+//     return res.status(500).json({
+//       success: false,
+//       message: "Server error",
+//       reason: error.message
+//     });
+//   }
+// };
+
+
 const createWasteLog = async (req, res) => {
   try {
-    const { category, volume, location, lga } = req.body;
+    const { wasteType, volume } = req.body;
+    // Save image locally
+    const imagePath = req.file.path;
+    // THIS IS WHERE WE CALL AI
+    const formData = new FormData();
+    formData.append("image", fs.createReadStream(imagePath));
+    // THIS URL COMES FROM DATA SCIENCE TEAM
+    const aiResponse = await axios.post(
+        "http://127.0.0.1:8000/predict",
+    //   process.env.AI_SERVICE_URL, // <-- They must give you this
+      formData,
+      { headers: formData.getHeaders() }
+    );
 
-    // Validate category
-    if (!ALLOWED_CATEGORIES.includes(category)) {
-      return res.status(400).json({
-        success: false,
-        message: "Validation error",
-        reason: `Category must be one of: ${ALLOWED_CATEGORIES.join(", ")}`
-      });
-    }
+    const prediction = aiResponse.data.predicted_class;
+    const confidence = aiResponse.data.confidence;
 
-    // Validate volume
-    if (!ALLOWED_VOLUMES.includes(volume)) {
-      return res.status(400).json({
-        success: false,
-        message: "Validation error",
-        reason: `Volume must be one of: ${ALLOWED_VOLUMES.join(", ")}`
-      });
-    }
-
-    const wasteLog = await WasteLog.create({
-      category,
+    // END AI CALL
+    const log = await WasteLog.create({
+      wasteType,
       volume,
-      location,
       lga: req.user.lga,
-      userId: req.user.id // attach authenticated user
+      userId: req.user.id,
+      imageUrl: imagePath,
+      aiPrediction: prediction,
+      aiConfidence: confidence,
+      status: "pending",
     });
 
-    return res.status(201).json({
-      success: true,
-      message: "Waste logged successfully",
-      data: wasteLog,
-      loggedBy: req.user.role
+    res.json({
+      message: "Waste log created successfully",
+      log,
     });
 
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-      reason: error.message
-    });
+    res.status(500).json({ message: "Error creating waste log" });
   }
 };
+
 
 //getWasteLogs
 const getWasteLogs = async (req, res) => {
