@@ -8,6 +8,7 @@ class AuthService {
   AuthService._internal();
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId: '268312084234-sgtra1lbo1ta38vd1cmp3vt517olda8a.apps.googleusercontent.com',
     scopes: [
       'email',
       'profile',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'pages/auth_check_screen.dart';
 import 'pages/onboarding_screen.dart';
 import 'pages/login_screen.dart';
@@ -23,8 +24,12 @@ import 'pages/collector/collector_job_details_screen.dart';
 import 'pages/collector/collector_job_accepted_screen.dart';
 import 'pages/collector/collector_navigation_screen.dart';
 import 'pages/collector/collector_pickup_confirmation_screen.dart';
+import 'pages/collector/collector_notifications_screen.dart';
 
-void main() {
+Future<void> main() async {
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
+  
   runApp(const WasteLinkApp());
 }
 
@@ -72,6 +77,7 @@ class WasteLinkApp extends StatelessWidget {
         '/collector_job_accepted': (context) => const CollectorJobAcceptedScreen(),
         '/collector_navigation': (context) => const CollectorNavigationScreen(),
         '/collector_pickup_confirmation': (context) => const CollectorPickupConfirmationScreen(),
+        '/collector_notifications': (context) => const CollectorNotificationsScreen(),
       },
     );
   }
