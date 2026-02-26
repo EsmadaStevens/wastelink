@@ -162,37 +162,98 @@ const { WasteLog } = require("../../../models");
 //   }
 // };
 
+// const createWasteLog = async (req, res) => {
+//   try {
+//     console.log("BODY:", req.body);
+//     console.log("FILE:", req.file);
+
+//     // Validate request
+//     if (!req.body || !req.file) {
+//       return res.status(400).json({
+//         message: "Missing wasteType, volume or image. Use form-data."
+//       });
+//     }
+
+//     const { wasteType, volume } = req.body;
+//     const imagePath = req.file.path;
+
+//     // 1️⃣ Call Data Science AI API
+//     const predictionData = await classifyImage(imagePath);
+
+//     console.log("AI RESPONSE:", predictionData);
+
+//     // 2️⃣ Extract prediction
+//     const aiCategory = predictionData.prediction;
+//     const aiConfidence = predictionData.confidence;
+
+//     // 3️⃣ Save to database
+//     const log = await WasteLog.create({
+//       wasteType,
+//       volume,
+//       lga: req.user.lga,
+//       userId: req.user.id,
+//       imageUrl: imagePath,
+//       aiPrediction: aiCategory,        // "metal"
+//       aiConfidence: aiConfidence,      // 0.7089...
+//       status: "pending",
+//     });
+
+//     return res.status(201).json({
+//       message: "Waste log created successfully",
+//       log,
+//     });
+
+//   } catch (error) {
+//     console.error("CREATE WASTE ERROR:", error);
+//     return res.status(500).json({
+//       message: "Error creating waste log",
+//       error: error.message,
+//     });
+//   }
+// };
 const createWasteLog = async (req, res) => {
   try {
+    console.log("BODY:", req.body);
+    console.log("FILE:", req.file);
+
+    // Validate request
     if (!req.body || !req.file) {
       return res.status(400).json({
-        message: "Missing wasteType, quantityRange or image."
+        message: "Missing wasteType, volume or image. Use form-data."
       });
     }
 
-    const { wasteType, quantityRange } = req.body;
+    const { wasteType, volume } = req.body;
     const imagePath = req.file.path;
 
-    // 1️⃣ Call AI
+    // 1️⃣ Call AI API
     const predictionData = await classifyImage(imagePath);
+
+    console.log("AI RESPONSE:", predictionData);
 
     const aiCategory = predictionData.prediction;
     const aiConfidence = predictionData.confidence;
 
-    // 2️⃣ Convert Range → Estimated KG
-    const rangeToKg = {
+    // 2️⃣ Convert volume to estimated KG (ONLY if volume is range text)
+    // If volume is already numeric like "5", it will still work.
+
+    let estimatedKg = 0;
+
+    const volumeMap = {
       "1-5 kg": 3,
       "5-20 kg": 12.5,
       "20-100 kg": 60,
       "100+ kg": 120,
+      "Low": 3,
+      "Medium": 12.5,
+      "High": 60,
     };
 
-    const estimatedKg = rangeToKg[quantityRange];
-
-    if (!estimatedKg) {
-      return res.status(400).json({
-        message: "Invalid quantity range selected."
-      });
+    if (volumeMap[volume]) {
+      estimatedKg = volumeMap[volume];
+    } else {
+      // If user sends numeric value like "5"
+      estimatedKg = parseFloat(volume) || 0;
     }
 
     // 3️⃣ Price per KG
@@ -207,26 +268,27 @@ const createWasteLog = async (req, res) => {
 
     const estimatedValue = estimatedKg * rate;
 
-    // 4️⃣ Save
+    // 4️⃣ Save to database (ADD estimatedValue column in DB if not yet added)
     const log = await WasteLog.create({
       wasteType,
-      quantityRange,
+      volume,
       lga: req.user.lga,
       userId: req.user.id,
       imageUrl: imagePath,
       aiPrediction: aiCategory,
       aiConfidence,
-      estimatedValue,
+      estimatedValue,   // 👈 NEW FIELD
       status: "pending",
     });
 
-    // 5️⃣ Response
+    // 5️⃣ Refined Response
     return res.status(201).json({
       message: "Waste logged successfully!",
       info: "Your waste has been recorded. Companies can now see it for collection or reuse.",
       wasteDetails: {
-        type: aiCategory,
-        quantityRange,
+        wasteType,
+        volume,
+        aiPrediction: aiCategory,
         estimatedValue: `$${estimatedValue.toFixed(2)}`
       },
       impact: {
@@ -236,13 +298,14 @@ const createWasteLog = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("CREATE WASTE ERROR:", error);
     return res.status(500).json({
       message: "Error creating waste log",
       error: error.message,
     });
   }
 };
+
 //getWasteLogs
 const getWasteLogs = async (req, res) => {
   try {
