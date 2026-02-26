@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
-const { sendOtpEmail } = require('../utils/emailService');
+// const { sendOtpEmail } = require('../utils/emailService');
 const { generateToken, verifyToken } = require('../utils/jwt');
 const db = require("../../../models");
 const { User } = db;
@@ -51,7 +51,7 @@ const hashedPassword = await bcrypt.hash(password, 10);
     lga
   });
 
-  await sendOtpEmail(email, otp);
+  // await sendOtpEmail(email, otp);
 
   console.log("New User Created:", newUser);
   return {
