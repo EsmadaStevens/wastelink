@@ -41,17 +41,14 @@ const signup = async (data) => {
   const { name, email, password, role, lga } = data;
 const hashedPassword = await bcrypt.hash(password, 10);
 
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  // const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
   const newUser = await User.create({
     name,
     email,
     password: hashedPassword,
     role,
-    lga,
-    isVerified: false,
-    otp: otp,
-    otpExpires: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+    lga
   });
 
   await sendOtpEmail(email, otp);
@@ -65,74 +62,74 @@ const hashedPassword = await bcrypt.hash(password, 10);
 
 
 
-// Verify OTP
-const verifyOtp = async (email, otp) => {
-  const user = await User.findOne({ where: { email } });
+// // Verify OTP
+// const verifyOtp = async (email, otp) => {
+//   const user = await User.findOne({ where: { email } });
 
-  if (!user) throw new Error("User not found");
-  if (user.otp !== otp) throw new Error("Invalid OTP");
-  if (user.otpExpires < new Date()) throw new Error("OTP expired");
+//   if (!user) throw new Error("User not found");
+//   if (user.otp !== otp) throw new Error("Invalid OTP");
+//   if (user.otpExpires < new Date()) throw new Error("OTP expired");
 
-  await user.update({ isVerified: true, otp: null, otpExpires: null });
+//   await user.update({ isVerified: true, otp: null, otpExpires: null });
 
-  return { message: "Account verified successfully" };
-};
-
-
-//Resend OTP
-const resendOtp = async (email) => {
-  const user = await User.findOne({ where: { email } });
-
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  if (user.isVerified) {
-    throw new Error("User already verified");
-  }
-
-  const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
-
-  await user.update({
-    otp: newOtp,
-    otpExpires: new Date(Date.now() + 10 * 60 * 1000)
-  });
-
-  await sendOtpEmail(user.email, newOtp);
-
-  return { message: "New OTP sent successfully" };
-};
+//   return { message: "Account verified successfully" };
+// };
 
 
-// Login
-async function login({ email, password }) {
-  // 1. Find user by email
-  const user = await User.findOne({ where: { email } });
-  if (!user) throw new Error('User not found');
+// //Resend OTP
+// const resendOtp = async (email) => {
+//   const user = await User.findOne({ where: { email } });
 
-  // 2. Ensure account is verified
-  if (!user.isVerified) throw new Error('Account not verified');
+//   if (!user) {
+//     throw new Error("User not found");
+//   }
 
-  // 3. Compare passwords
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) throw new Error('Incorrect password');
+//   if (user.isVerified) {
+//     throw new Error("User already verified");
+//   }
 
-  // 4. Generate JWT token
-  const token = generateToken(user); // <-- use helper
+//   const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
 
-  // 5. Return token + user info (for frontend / mobile app)
-  return {
-    token,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      lga: user.lga,
-      isVerified: user.isVerified
-    }
-  };
-}
+//   await user.update({
+//     otp: newOtp,
+//     otpExpires: new Date(Date.now() + 10 * 60 * 1000)
+//   });
+
+//   await sendOtpEmail(user.email, newOtp);
+
+//   return { message: "New OTP sent successfully" };
+// };
+
+
+// // Login
+// async function login({ email, password }) {
+//   // 1. Find user by email
+//   const user = await User.findOne({ where: { email } });
+//   if (!user) throw new Error('User not found');
+
+//   // 2. Ensure account is verified
+//   if (!user.isVerified) throw new Error('Account not verified');
+
+//   // 3. Compare passwords
+//   const isMatch = await bcrypt.compare(password, user.password);
+//   if (!isMatch) throw new Error('Incorrect password');
+
+//   // 4. Generate JWT token
+//   const token = generateToken(user); // <-- use helper
+
+//   // 5. Return token + user info (for frontend / mobile app)
+//   return {
+//     token,
+//     user: {
+//       id: user.id,
+//       name: user.name,
+//       email: user.email,
+//       role: user.role,
+//       lga: user.lga,
+//       isVerified: user.isVerified
+//     }
+//   };
+// }
 
 //getUser
 async function getAllUsers() {
@@ -146,4 +143,4 @@ async function getAllUsers() {
     throw error;
   }
 }  
-module.exports = { signup, verifyOtp, resendOtp, login, getAllUsers };
+module.exports = { signup, getAllUsers };

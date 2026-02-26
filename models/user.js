@@ -37,19 +37,7 @@ module.exports = (sequelize, DataTypes) => {
       lga: {
         type: DataTypes.STRING,
         allowNull: true,
-      },
-      isVerified: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false, // user starts as unverified
-      },
-      otp: {
-        type: DataTypes.STRING, // store the 6-digit OTP
-        allowNull: true,
-      },
-      otpExpires: {
-        type: DataTypes.DATE, // expiration time of OTP
-        allowNull: true,
-      },
+      }
     },
     {
       sequelize,
