@@ -55,7 +55,7 @@ const hashedPassword = await bcrypt.hash(password, 10);
 
   console.log("New User Created:", newUser);
   return {
-  message: "Signup successful. OTP has been sent to your email."
+  message: "Signup successful"
 };
 
 };

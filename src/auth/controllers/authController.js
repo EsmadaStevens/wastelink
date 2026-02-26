@@ -1,6 +1,9 @@
 const { signup, getAllUsers } = require('../services/authService');
 const db = require("../../../models");
 const { User } = db;
+const bcrypt = require('bcryptjs');
+const { generateToken, verifyToken } = require('../utils/jwt');
+
 
 async function signupController(req, res) {
   try {
