@@ -164,47 +164,79 @@ const { WasteLog } = require("../../../models");
 
 const createWasteLog = async (req, res) => {
   try {
-    console.log("BODY:", req.body);
-    console.log("FILE:", req.file);
-
-    // Validate request
     if (!req.body || !req.file) {
       return res.status(400).json({
-        message: "Missing wasteType, volume or image. Use form-data."
+        message: "Missing wasteType, quantityRange or image."
       });
     }
 
-    const { wasteType, volume } = req.body;
+    const { wasteType, quantityRange } = req.body;
     const imagePath = req.file.path;
 
-    // 1️⃣ Call Data Science AI API
+    // 1️⃣ Call AI
     const predictionData = await classifyImage(imagePath);
 
-    console.log("AI RESPONSE:", predictionData);
-
-    // 2️⃣ Extract prediction
     const aiCategory = predictionData.prediction;
     const aiConfidence = predictionData.confidence;
 
-    // 3️⃣ Save to database
+    // 2️⃣ Convert Range → Estimated KG
+    const rangeToKg = {
+      "1-5 kg": 3,
+      "5-20 kg": 12.5,
+      "20-100 kg": 60,
+      "100+ kg": 120,
+    };
+
+    const estimatedKg = rangeToKg[quantityRange];
+
+    if (!estimatedKg) {
+      return res.status(400).json({
+        message: "Invalid quantity range selected."
+      });
+    }
+
+    // 3️⃣ Price per KG
+    const pricePerKg = {
+      plastic: 0.35,
+      metal: 0.50,
+      paper: 0.20,
+      organic: 0.10,
+    };
+
+    const rate = pricePerKg[aiCategory.toLowerCase()] || 0.15;
+
+    const estimatedValue = estimatedKg * rate;
+
+    // 4️⃣ Save
     const log = await WasteLog.create({
       wasteType,
-      volume,
+      quantityRange,
       lga: req.user.lga,
       userId: req.user.id,
       imageUrl: imagePath,
-      aiPrediction: aiCategory,        // "metal"
-      aiConfidence: aiConfidence,      // 0.7089...
+      aiPrediction: aiCategory,
+      aiConfidence,
+      estimatedValue,
       status: "pending",
     });
 
+    // 5️⃣ Response
     return res.status(201).json({
-      message: "Waste log created successfully",
-      log,
+      message: "Waste logged successfully!",
+      info: "Your waste has been recorded. Companies can now see it for collection or reuse.",
+      wasteDetails: {
+        type: aiCategory,
+        quantityRange,
+        estimatedValue: `$${estimatedValue.toFixed(2)}`
+      },
+      impact: {
+        sdg: "SDG 14 – Life Below Water"
+      },
+      log
     });
 
   } catch (error) {
-    console.error("CREATE WASTE ERROR:", error);
+    console.error(error);
     return res.status(500).json({
       message: "Error creating waste log",
       error: error.message,

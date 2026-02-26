@@ -18,6 +18,15 @@ module.exports = (sequelize, DataTypes) => {
       userId: DataTypes.INTEGER,
       category: DataTypes.STRING,
       volume: DataTypes.STRING,
+      quantityRange: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+
+      estimatedValue: {
+        type: DataTypes.FLOAT,
+        allowNull: false,
+      },
       photoUrl: DataTypes.STRING,
       status: DataTypes.STRING,
       valueEstimate: DataTypes.FLOAT,
