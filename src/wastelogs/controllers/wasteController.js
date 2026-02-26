@@ -8,7 +8,6 @@ const createWasteLog = async (req, res) => {
     console.log("BODY:", req.body);
     console.log("FILE:", req.file);
 
-    // Validate request
     if (!req.body || !req.file) {
       return res.status(400).json({
         message: "Missing wasteType, volume or image. Use form-data."
@@ -18,35 +17,32 @@ const createWasteLog = async (req, res) => {
     const { wasteType, volume } = req.body;
     const imagePath = req.file.path;
 
-    // 1️⃣ Call AI API
+    // 1️⃣ Convert volume level → KG range + midpoint
+    const volumeMap = {
+      low: { range: "1-5 kg", midpoint: 3 },
+      medium: { range: "5-20 kg", midpoint: 12.5 },
+      high: { range: "20-100 kg", midpoint: 60 },
+      veryhigh: { range: "100+ kg", midpoint: 120 }
+    };
+
+    const normalizedVolume = volume.toLowerCase();
+
+    if (!volumeMap[normalizedVolume]) {
+      return res.status(400).json({
+        message: "Invalid volume. Use: low, medium, high, veryhigh"
+      });
+    }
+
+    const quantityRange = volumeMap[normalizedVolume].range;
+    const estimatedKg = volumeMap[normalizedVolume].midpoint;
+
+    // 2️⃣ Call AI API
     const predictionData = await classifyImage(imagePath);
 
     console.log("AI RESPONSE:", predictionData);
 
     const aiCategory = predictionData.prediction;
     const aiConfidence = predictionData.confidence;
-
-    // 2️⃣ Convert volume to estimated KG (ONLY if volume is range text)
-    // If volume is already numeric like "5", it will still work.
-
-    let estimatedKg = 0;
-
-    const volumeMap = {
-      "1-5 kg": 3,
-      "5-20 kg": 12.5,
-      "20-100 kg": 60,
-      "100+ kg": 120,
-      "Low": 3,
-      "Medium": 12.5,
-      "High": 60,
-    };
-
-    if (volumeMap[volume]) {
-      estimatedKg = volumeMap[volume];
-    } else {
-      // If user sends numeric value like "5"
-      estimatedKg = parseFloat(volume) || 0;
-    }
 
     // 3️⃣ Price per KG
     const pricePerKg = {
@@ -59,33 +55,34 @@ const createWasteLog = async (req, res) => {
     const rate = pricePerKg[aiCategory.toLowerCase()] || 0.15;
 
     const estimatedValue = estimatedKg * rate;
-    const quantityRange = volume; // Store original volume text as quantityRange
-    // 4️⃣ Save to database (ADD estimatedValue column in DB if not yet added)
+
+    // 4️⃣ Save to DB
     const log = await WasteLog.create({
       wasteType,
-      volume,
-      quantityRange,
+      volume: normalizedVolume,   // original level
+      quantityRange,              // real KG range
       lga: req.user.lga,
       userId: req.user.id,
       imageUrl: imagePath,
       aiPrediction: aiCategory,
       aiConfidence,
-      estimatedValue,   // 👈 NEW FIELD
+      estimatedValue,
       status: "pending",
     });
 
-    // 5️⃣ Refined Response
+    // 5️⃣ Clean Response
     return res.status(201).json({
       message: "Waste logged successfully!",
-      info: "Your waste has been recorded. Companies can now see it for collection or reuse.",
       wasteDetails: {
         wasteType,
-        volume,
+        volumeLevel: normalizedVolume,
+        quantityRange,
         aiPrediction: aiCategory,
+        confidence: aiConfidence,
         estimatedValue: `$${estimatedValue.toFixed(2)}`
       },
       impact: {
-        sdg: "SDG 14 – Life Below Water"
+        sdg: "SDG 14 – Life Below Water 🌊"
       },
       log
     });
