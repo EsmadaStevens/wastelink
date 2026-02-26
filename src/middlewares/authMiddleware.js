@@ -32,20 +32,53 @@ const authenticate = async (req, res, next) => {
 };
 
 
-const authorize = (...roles) => {
+// const authorize = (...roles) => {
+//   return (req, res, next) => {
+//     if (!roles.includes(req.user.role)) {
+//       return res.status(403).json({
+//         success: false,
+//         message: "Access denied",
+//         reason: `Role '${req.user.role}' is not allowed to access this resource`,
+//         yourRole: req.user.role,
+//         allowedRoles
+//       });
+//     }
+//     next();
+//   };
+// };
+
+// Role Authorization Middleware
+const authorize = (...allowedRoles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+
+    // Make sure user exists
+    if (!req.user || !req.user.role) {
+      return res.status(401).json({
+        success: false,
+        message: "User role not found"
+      });
+    }
+
+    // Convert everything to lowercase for safety
+    const userRole = req.user.role.toLowerCase();
+    const normalizedRoles = allowedRoles.map(role =>
+      role.toLowerCase()
+    );
+
+    // Check if role is allowed
+    if (!normalizedRoles.includes(userRole)) {
       return res.status(403).json({
         success: false,
         message: "Access denied",
-        reason: `Role '${req.user.role}' is not allowed to access this resource`,
         yourRole: req.user.role,
-        allowedRoles: roles
+        allowedRoles: normalizedRoles
       });
     }
+
     next();
   };
 };
+
 
 module.exports = { authenticate, authorize };
 

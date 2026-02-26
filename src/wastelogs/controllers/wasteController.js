@@ -1,23 +1,22 @@
-const axios = require("axios");
-const FormData = require("form-data");
-const fs = require("fs");
+const { classifyImage } = require("../../../src/utils/aiclient");
+
 const { WasteLog } = require("../../../models");
 
-const ALLOWED_CATEGORIES = [
-  "Plastic",
-  "Organic",
-  "Metal",
-  "Glass",
-  "Electronic"
-];
+// const ALLOWED_CATEGORIES = [
+//   "Plastic",
+//   "Organic",
+//   "Metal",
+//   "Glass",
+//   "Electronic"
+// ];
 
 
-const ALLOWED_VOLUMES = [
-  "Small",
-  "Medium",
-  "Large",
-  "Extra Large"
-];
+// const ALLOWED_VOLUMES = [
+//   "Small",
+//   "Medium",
+//   "Large",
+//   "Extra Large"
+// ];
 
 
 // const createWasteLog = async (req, res) => {
@@ -67,48 +66,151 @@ const ALLOWED_VOLUMES = [
 // };
 
 
+// const createWasteLog = async (req, res) => {
+//   try {
+//     const { wasteType, volume } = req.body;
+//     // Save image locally
+//     const imagePath = req.file.path;
+//     // THIS IS WHERE WE CALL AI
+//     const formData = new FormData();
+//     formData.append("image", fs.createReadStream(imagePath));
+//     // THIS URL COMES FROM DATA SCIENCE TEAM
+//     const aiResponse = await axios.post(
+//         // "http://127.0.0.1:8000/predict",
+//       process.env.AI_SERVICE_URL,
+//       formData,
+//       { headers: formData.getHeaders() }
+//     );
+
+//     const prediction = aiResponse.data.predicted_class;
+//     const confidence = aiResponse.data.confidence;
+
+//     // END AI CALL
+//     const log = await WasteLog.create({
+//       wasteType,
+//       volume,
+//       lga: req.user.lga,
+//       userId: req.user.id,
+//       imageUrl: imagePath,
+//       aiPrediction: prediction,
+//       aiConfidence: confidence,
+//       status: "pending",
+//     });
+
+//     res.json({
+//       message: "Waste log created successfully",
+//       log,
+//     });
+
+//   } catch (error) {
+//     res.status(500).json({ message: "Error creating waste log" });
+//   }
+// };
+
+// createWasteLog
+// const createWasteLog = async (req, res) => {
+//   try {
+//     console.log("BODY:", req.body);
+//     console.log("FILE:", req.file);
+
+//     if (!req.body) {
+//       return res.status(400).json({
+//         message: "No body received. Make sure you are using form-data."
+//       });
+//     }
+
+//     const { wasteType, volume } = req.body;
+//     const imagePath = req.file.path;
+
+//     // =====================
+//     // Call HF AI classifier
+//     // =====================
+//     const predictionData = await classifyImage(imagePath);
+
+//     // Pick top label
+//     let top = predictionData[0];
+//     for (let i = 1; i < predictionData.length; i++) {
+//       if (predictionData[i].score > top.score) top = predictionData[i];
+//     }
+
+//     const label = top.label.toLowerCase();
+
+//     let aiCategory = "General";
+//     if (label.includes("plastic")) aiCategory = "Plastic";
+//     else if (label.includes("metal")) aiCategory = "Metal";
+//     else if (label.includes("paper")) aiCategory = "Paper";
+//     else if (label.includes("organic") || label.includes("food")) aiCategory = "Organic";
+
+//     const log = await WasteLog.create({
+//       wasteType,
+//       volume,
+//       lga: req.user.lga,
+//       userId: req.user.id,
+//       imageUrl: imagePath,
+//       aiPrediction: aiCategory,
+//       aiConfidence: top.score,
+//       status: "pending",
+//     });
+
+//     res.json({
+//       message: "Waste log created successfully",
+//       log,
+//     });
+
+//   } catch (error) {
+//     res.status(500).json({ message: "Error creating waste log", error: error.message });
+//   }
+// };
+
 const createWasteLog = async (req, res) => {
   try {
+    console.log("BODY:", req.body);
+    console.log("FILE:", req.file);
+
+    // Validate request
+    if (!req.body || !req.file) {
+      return res.status(400).json({
+        message: "Missing wasteType, volume or image. Use form-data."
+      });
+    }
+
     const { wasteType, volume } = req.body;
-    // Save image locally
     const imagePath = req.file.path;
-    // THIS IS WHERE WE CALL AI
-    const formData = new FormData();
-    formData.append("image", fs.createReadStream(imagePath));
-    // THIS URL COMES FROM DATA SCIENCE TEAM
-    const aiResponse = await axios.post(
-        "http://127.0.0.1:8000/predict",
-    //   process.env.AI_SERVICE_URL, // <-- They must give you this
-      formData,
-      { headers: formData.getHeaders() }
-    );
 
-    const prediction = aiResponse.data.predicted_class;
-    const confidence = aiResponse.data.confidence;
+    // 1️⃣ Call Data Science AI API
+    const predictionData = await classifyImage(imagePath);
 
-    // END AI CALL
+    console.log("AI RESPONSE:", predictionData);
+
+    // 2️⃣ Extract prediction
+    const aiCategory = predictionData.prediction;
+    const aiConfidence = predictionData.confidence;
+
+    // 3️⃣ Save to database
     const log = await WasteLog.create({
       wasteType,
       volume,
       lga: req.user.lga,
       userId: req.user.id,
       imageUrl: imagePath,
-      aiPrediction: prediction,
-      aiConfidence: confidence,
+      aiPrediction: aiCategory,        // "metal"
+      aiConfidence: aiConfidence,      // 0.7089...
       status: "pending",
     });
 
-    res.json({
+    return res.status(201).json({
       message: "Waste log created successfully",
       log,
     });
 
   } catch (error) {
-    res.status(500).json({ message: "Error creating waste log" });
+    console.error("CREATE WASTE ERROR:", error);
+    return res.status(500).json({
+      message: "Error creating waste log",
+      error: error.message,
+    });
   }
 };
-
-
 //getWasteLogs
 const getWasteLogs = async (req, res) => {
   try {

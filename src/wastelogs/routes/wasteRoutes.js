@@ -7,7 +7,10 @@ const upload = require("../../middlewares/upload");
 
 
 // Only SME can log waste
-router.post("/create-waste",authenticate, authorize("SME"), createWasteLog);
+// router.post("/create-waste",authenticate, authorize("SME"), createWasteLog);
+router.post("/create-waste", authenticate, authorize("sme"), upload.single("image"),  // must come BEFORE controller
+  createWasteLog
+);
 
 //get waste logs with optional filters
 router.get("/view-waste", authenticate, getWasteLogs);
