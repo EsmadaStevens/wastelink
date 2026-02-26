@@ -43,26 +43,44 @@ async function acceptJob(req, res) {
       return res.status(404).json({ message: "Waste log not found" });
     }
 
-    // Update waste log status
+    // 🔥 1️⃣ Prevent accepting already accepted job
+    if (wasteLog.status === "accepted") {
+      return res.status(400).json({
+        message: "This job has already been accepted"
+      });
+    }
+
+    // 🔥 2️⃣ Check if pickup request already exists
+    const existingPickup = await PickupRequest.findOne({
+      where: { WasteLogId: wasteLog.id }
+    });
+
+    if (existingPickup) {
+      return res.status(400).json({
+        message: "Pickup request already exists for this job"
+      });
+    }
+
+    // ✅ Update waste log status
     wasteLog.status = "accepted";
     await wasteLog.save();
 
-    // Create pickup request
+    // ✅ Create pickup request
     const pickup = await PickupRequest.create({
-      WasteLogId: wasteLog.id,   // make sure your column matches migration
-      collectorId: req.user.id,  // foreignKey in PickupRequest
+      WasteLogId: wasteLog.id,
+      collectorId: req.user.id,
       status: "accepted"
     });
 
-    res.json({
+    return res.json({
       message: "Job accepted successfully",
       pickup
     });
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
-};
+}
 
 module.exports = { getAvailableJobs, acceptJob };

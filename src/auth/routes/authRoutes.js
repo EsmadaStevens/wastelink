@@ -7,10 +7,6 @@ router.post('/verify-otp', verifyOtpController);
 router.post('/resend-otp', resendOtpController);
 router.get('/getsignup', getAllUsersController);
 
-
-
-
-
 router.post('/login', loginController);
 
 module.exports = router;
