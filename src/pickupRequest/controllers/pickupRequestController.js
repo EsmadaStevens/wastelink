@@ -46,7 +46,10 @@ async function getAvailableJobs(req, res) {
       ]
     });
 
-    res.json(jobs);
+    res.json({
+      message: "Available jobs retrieved successfully",
+      jobs
+    });
 
   } catch (error) {
     console.error(error);
