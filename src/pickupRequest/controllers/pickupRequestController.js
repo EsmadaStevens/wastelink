@@ -34,7 +34,8 @@ async function getAvailableJobs(req, res) {
       });
     }
 
-    const jobs = await PickupRequest.findAll({
+    // const jobs = await PickupRequest.findAll({
+    const jobs = await WasteLog.findAll({
       where: { status: "pending" },
       include: [
         {
