@@ -169,7 +169,9 @@ const acceptJob = async (req, res) => {
     wasteLog.status = "pickup_accepted";
     await wasteLog.save();
 
-    return res.json({ message: "Job accepted successfully" });
+    return res.json({ message: "Job accepted successfully",
+      pickup
+     });
 
   } catch (error) {
     console.error(error);
