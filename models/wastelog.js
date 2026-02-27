@@ -9,7 +9,10 @@ module.exports = (sequelize, DataTypes) => {
     },
 
     wasteType: DataTypes.STRING,
-    volume: DataTypes.FLOAT,
+    volume: {
+      type: DataTypes.ENUM("low", "medium", "high", "veryhigh"),
+      allowNull: false,
+    },
 
     status: {
       type: DataTypes.STRING,
