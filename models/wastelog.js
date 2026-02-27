@@ -1,12 +1,11 @@
-'use strict';
+"use strict";
 
 module.exports = (sequelize, DataTypes) => {
-  const WasteLog = sequelize.define('WasteLog', {
-
+  const WasteLog = sequelize.define("WasteLog", {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
-      primaryKey: true
+      primaryKey: true,
     },
 
     wasteType: DataTypes.STRING,
@@ -14,18 +13,23 @@ module.exports = (sequelize, DataTypes) => {
 
     status: {
       type: DataTypes.STRING,
-      defaultValue: 'pending'
-    }
-
+      defaultValue: "pending",
+    },
+    quantityRange: DataTypes.STRING,
+    lga: DataTypes.STRING,
+    imageUrl: DataTypes.STRING,
+    aiPrediction: DataTypes.STRING,
+    aiConfidence: DataTypes.FLOAT,
+    estimatedValue: DataTypes.FLOAT,
   });
 
   WasteLog.associate = (models) => {
     WasteLog.belongsTo(models.User, {
-      foreignKey: 'userId'
+      foreignKey: "userId",
     });
 
     WasteLog.hasOne(models.PickupRequest, {
-      foreignKey: 'WasteLogId'
+      foreignKey: "WasteLogId",
     });
   };
 
