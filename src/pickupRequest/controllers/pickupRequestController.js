@@ -107,42 +107,74 @@ async function getAvailableJobs(req, res) {
 //     return res.status(500).json({ message: "Server error" });
 //   }
 // }
-async function acceptJob(req, res) {
-  try {
-    if (req.user.role !== "COLLECTOR") {
-      return res.status(403).json({
-        message: "Only collectors can accept jobs"
-      });
-    }
+// async function acceptJob(req, res) {
+//   try {
+//     if (req.user.role !== "COLLECTOR") {
+//       return res.status(403).json({
+//         message: "Only collectors can accept jobs"
+//       });
+//     }
 
-    const pickup = await PickupRequest.findByPk(req.params.id);
+//     const pickup = await PickupRequest.findByPk(req.params.id);
+
+//     if (!pickup) {
+//       return res.status(404).json({
+//         message: "Pickup request not found"
+//       });
+//     }
+
+//     if (pickup.status !== "pending") {
+//       return res.status(400).json({
+//         message: "This job is no longer available"
+//       });
+//     }
+
+//     pickup.status = "accepted";
+//     pickup.collectorId = req.user.id;
+//     await pickup.save();
+
+//     return res.json({
+//       message: "Job accepted successfully",
+//       pickup
+//     });
+
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ message: "Server error" });
+//   }
+// }
+
+const acceptJob = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const collectorId = req.user.id;
+
+    const pickup = await PickupRequest.findByPk(id);
 
     if (!pickup) {
-      return res.status(404).json({
-        message: "Pickup request not found"
-      });
+      return res.status(404).json({ message: "Pickup not found" });
     }
 
+    // Prevent double acceptance
     if (pickup.status !== "pending") {
-      return res.status(400).json({
-        message: "This job is no longer available"
-      });
+      return res.status(400).json({ message: "Already accepted" });
     }
 
     pickup.status = "accepted";
-    pickup.collectorId = req.user.id;
+    pickup.collectorId = collectorId;
     await pickup.save();
 
-    return res.json({
-      message: "Job accepted successfully",
-      pickup
-    });
+    const wasteLog = await WasteLog.findByPk(pickup.WasteLogId);
+    wasteLog.status = "pickup_accepted";
+    await wasteLog.save();
+
+    return res.json({ message: "Job accepted successfully" });
 
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Error accepting job" });
   }
-}
+};
 
 async function requestPickup(req, res) {
   try {
