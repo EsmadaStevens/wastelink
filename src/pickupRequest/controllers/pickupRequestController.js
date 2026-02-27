@@ -1,62 +1,61 @@
 const { PickupRequest, WasteLog, User } = require("../../../models");
 
 // GET available jobs for collector
-// async function getAvailableJobs(req, res) { 
-//   try {
-//     // Only collectors allowed
-//     if (req.user.role !== "COLLECTOR") {
-//       return res.status(403).json({
-//         message: "Only collectors can view jobs",
-//         role: req.user.role
-//       });
-//     }
-
-//     // Find waste logs in same LGA
-//     const logs = await WasteLog.findAll({
-//       where: {
-//         lga: req.user.lga,
-//         status: "pending"
-//       }
-//     });
-
-//     res.json(logs);
-
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// };
-async function getAvailableJobs(req, res) {
+async function getAvailableJobs(req, res) { 
   try {
+    // Only collectors allowed
     if (req.user.role !== "COLLECTOR") {
       return res.status(403).json({
-        message: "Only collectors can view jobs"
+        message: "Only collectors can view jobs",
+        role: req.user.role
       });
     }
 
-    // const jobs = await PickupRequest.findAll({
-    const jobs = await WasteLog.findAll({
-      where: { status: "pending" },
-      include: [
-        {
-          model: WasteLog,
-          // as: "wasteLog",
-          as: "WasteLog",
-          where: { lga: req.user.lga }
-        }
-      ]
+    // Find waste logs in same LGA
+    const logs = await WasteLog.findAll({
+      where: {
+        lga: req.user.lga,
+        status: "pending"
+      }
     });
 
-    res.json({
-      message: "Available jobs retrieved successfully",
-      jobs
-    });
+    res.json(logs);
 
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
-}
+};
+// async function getAvailableJobs(req, res) {
+//   try {
+//     if (req.user.role !== "COLLECTOR") {
+//       return res.status(403).json({
+//         message: "Only collectors can view jobs"
+//       });
+//     }
+
+//     const jobs = await PickupRequest.findAll({
+//       where: { status: "pending" },
+//       include: [
+//         {
+//           model: WasteLog,
+//           // as: "wasteLog",
+//           as: "WasteLog",
+//           where: { lga: req.user.lga }
+//         }
+//       ]
+//     });
+
+//     res.json({
+//       message: "Available jobs retrieved successfully",
+//       jobs
+//     });
+
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// }
 // Collector accepts a job
 // async function acceptJob(req, res) {
 //   try {
