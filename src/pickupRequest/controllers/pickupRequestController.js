@@ -39,7 +39,8 @@ async function getAvailableJobs(req, res) {
       include: [
         {
           model: WasteLog,
-          as: "wasteLog",
+          // as: "wasteLog",
+          as: "WasteLog",
           where: { lga: req.user.lga }
         }
       ]

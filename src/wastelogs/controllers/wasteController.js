@@ -211,7 +211,7 @@ const getWasteLogs = async (req, res) => {
 
     // Optional filters
     if (category) {
-      whereClause.category = category;
+      whereClause.wasteType = category;
     }
 
     if (volume) {

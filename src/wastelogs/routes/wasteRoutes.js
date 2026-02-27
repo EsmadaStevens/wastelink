@@ -19,6 +19,6 @@ router.get("/view-waste/:id", authenticate, getWasteById);
 
 
 // THIS HANDLES IMAGE UPLOAD
-router.post("/", authenticate, authorize("sme"),upload.single("image"), createWasteLog);
+// router.post("/", authenticate, authorize("sme"),upload.single("image"), createWasteLog);
 
 module.exports = router;
