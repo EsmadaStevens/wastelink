@@ -42,7 +42,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     if (_formKey.currentState!.validate() && _email != null && _otp != null) {
       setState(() => _isLoading = true);
 
-      // You'll need to add a 'resetPassword' method to your ApiService
       final success = await ApiService().resetPassword(
         email: _email!,
         otp: _otp!,

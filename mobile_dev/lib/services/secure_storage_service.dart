@@ -6,51 +6,38 @@ class SecureStorageService {
   SecureStorageService._internal();
 
   final _storage = const FlutterSecureStorage();
-  static const _authTokenKey = 'authToken';
-  static const _onboardingKey = 'hasSeenOnboarding';
+
+  // --- Keys ---
+  static const _tokenKey = 'authToken';
   static const _roleKey = 'userRole';
   static const _nameKey = 'userName';
   static const _emailKey = 'userEmail';
-  static const _lgaKey = 'userLGA';
   static const _phoneKey = 'userPhone';
+  static const _lgaKey = 'userLga';
   static const _pointsKey = 'userPoints';
+  static const _onboardingKey = 'hasSeenOnboarding';
 
   // --- Auth Token ---
   Future<void> saveAuthToken(String token) async {
-    await _storage.write(key: _authTokenKey, value: token);
+    await _storage.write(key: _tokenKey, value: token);
   }
 
   Future<String?> getAuthToken() async {
-    return await _storage.read(key: _authTokenKey);
+    return await _storage.read(key: _tokenKey);
   }
 
   Future<void> deleteAuthToken() async {
-    await _storage.delete(key: _authTokenKey);
+    // Deletes all user-specific data for a clean logout
+    await _storage.delete(key: _tokenKey);
     await _storage.delete(key: _roleKey);
     await _storage.delete(key: _nameKey);
     await _storage.delete(key: _emailKey);
-    await _storage.delete(key: _lgaKey);
     await _storage.delete(key: _phoneKey);
+    await _storage.delete(key: _lgaKey);
     await _storage.delete(key: _pointsKey);
   }
 
-  // --- User Info ---
-  Future<void> saveUserName(String name) async {
-    await _storage.write(key: _nameKey, value: name);
-  }
-
-  Future<String?> getUserName() async {
-    return await _storage.read(key: _nameKey);
-  }
-
-  Future<void> saveUserEmail(String email) async {
-    await _storage.write(key: _emailKey, value: email);
-  }
-
-  Future<String?> getUserEmail() async {
-    return await _storage.read(key: _emailKey);
-  }
-
+  // --- User Role ---
   Future<void> saveUserRole(String role) async {
     await _storage.write(key: _roleKey, value: role);
   }
@@ -59,25 +46,27 @@ class SecureStorageService {
     return await _storage.read(key: _roleKey);
   }
 
-  Future<void> saveUserLGA(String lga) async {
-    await _storage.write(key: _lgaKey, value: lga);
+  // --- User Details (Combined for efficiency) ---
+  Future<void> saveUserDetails(Map<String, dynamic> user) async {
+    if (user['name'] != null) await _storage.write(key: _nameKey, value: user['name']);
+    if (user['email'] != null) await _storage.write(key: _emailKey, value: user['email']);
+    if (user['phone'] != null) await _storage.write(key: _phoneKey, value: user['phone']);
+    if (user['lga'] != null) await _storage.write(key: _lgaKey, value: user['lga']);
+    if (user['points'] != null) {
+      await _storage.write(key: _pointsKey, value: user['points'].toString());
+    }
   }
 
-  Future<String?> getUserLGA() async {
-    return await _storage.read(key: _lgaKey);
+  Future<String?> getUserName() async {
+    return await _storage.read(key: _nameKey);
   }
 
-  Future<void> saveUserPhone(String phone) async {
-    await _storage.write(key: _phoneKey, value: phone);
+  Future<String?> getUserEmail() async {
+    return await _storage.read(key: _emailKey);
   }
 
   Future<String?> getUserPhone() async {
     return await _storage.read(key: _phoneKey);
-  }
-
-  // --- User Points ---
-  Future<void> saveUserPoints(int points) async {
-    await _storage.write(key: _pointsKey, value: points.toString());
   }
 
   Future<int> getUserPoints() async {
@@ -93,9 +82,5 @@ class SecureStorageService {
   Future<bool> hasSeenOnboarding() async {
     final value = await _storage.read(key: _onboardingKey);
     return value == 'true';
-  }
-  
-  Future<void> clearOnboarding() async {
-    await _storage.delete(key: _onboardingKey);
   }
 }

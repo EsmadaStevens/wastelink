@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'shared_data_service.dart'; // Import the shared service
+import '../services/shared_data_service.dart'; // job type definition
 import 'secure_storage_service.dart'; // To get user info
 
 class ApiService {
@@ -57,9 +59,11 @@ class ApiService {
         }),
       );
 
-      debugPrint('SignIn: API Response Status: ${response.statusCode}');
+      debugPrint('SignIn: API Response Status: ${response.statusCode}, body: ${response.body}');
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final decoded = jsonDecode(response.body);
+        debugPrint('SignIn: decoded response role=${decoded['role']}');
+        return decoded;
       } else {
         return null;
       }
@@ -87,14 +91,14 @@ class ApiService {
     }
     
     // --- DEVELOPMENT ONLY ---
-    // For any other email, we will simulate a successful signup.
+    // For any other email, simulate a successful signup.
     /*else {
       debugPrint('SignUp: Simulating success for development (Real API call disabled)');
       await Future.delayed(const Duration(seconds: 1));
       return {'success': true, 'message': 'Signup successful! Please log in.'};
     }*/
     
-    // NOTE: To enable real API signup, uncomment the try/catch block below and remove the else block above.
+
     
     try {
       debugPrint('SignUp: Calling Real API at $baseUrl/auth/signup');
@@ -106,12 +110,13 @@ class ApiService {
           'name': name,
           'email': email,
           'password': password,
-          'role': role,
+          // backend seems to expect uppercase role strings; convert to uppercase
+          'role': role.toUpperCase(),
           'lga': lga,
         }),
       );
 
-      debugPrint('SignUp: API Response Status: ${response.statusCode}');
+      debugPrint('SignUp: API Response Status: ${response.statusCode}, body: ${response.body}');
       if (response.statusCode == 201) {
         return {'success': true, 'message': 'Signup successful! Please log in.'};
       } else {
@@ -162,7 +167,7 @@ class ApiService {
     return true;
   }
 
-  /// Log Waste Data
+  /// Log Waste Data (now calls real API and sends image filename if provided)
   Future<bool> logWaste({
     required String wasteType,
     required String quantity,
@@ -170,8 +175,53 @@ class ApiService {
     required String date,
     String? imagePath,
   }) async {
-    await Future.delayed(const Duration(seconds: 1));
-    return true;
+    // send as multipart/form-data so the server can receive actual image file
+    try {
+      // get auth token from secure storage
+      final token = await SecureStorageService().getAuthToken();
+      
+      final uri = Uri.parse('$baseUrl/waste/create-waste');
+      final request = http.MultipartRequest('POST', uri);
+      
+      // add authorization header if token exists
+      if (token != null && token.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+      
+      request.fields['wasteType'] = wasteType;
+      request.fields['quantityRange'] = quantity;
+
+      // optionally attach location/date if backend expects them
+      if (location.isNotEmpty) {
+        request.fields['location'] = location;
+      }
+      if (date.isNotEmpty) {
+        request.fields['date'] = date;
+      }
+
+      // Add image file if provided
+      if (imagePath != null && imagePath.isNotEmpty) {
+        final file = File(imagePath);
+        if (await file.exists()) {
+          request.files.add(await http.MultipartFile.fromPath('image', imagePath));
+        }
+      }
+
+      final streamed = await request.send();
+      final response = await http.Response.fromStream(streamed);
+      
+      debugPrint('logWaste: API status ${response.statusCode}');
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        debugPrint('logWaste: Error - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      debugPrint('logWaste: Exception - $e');
+      return false;
+    }
   }
 
   /// Request a waste pickup (Hybrid: Live -> Fallback to Local)
@@ -185,12 +235,12 @@ class ApiService {
     // 1. Try Real API
     try {
       final token = await SecureStorageService().getAuthToken();
-      final url = Uri.parse('/api/pickup/request');
+      final url = Uri.parse('$baseUrl/pickup/request');
       final response = await http.post(
         url,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ',
+          if (token != null) 'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
           'wasteType': wasteType,
@@ -202,14 +252,31 @@ class ApiService {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return jsonDecode(response.body);
+        final bodyJson = jsonDecode(response.body);
+        // if job data returned, also insert locally so collectors see it immediately
+        try {
+          if (bodyJson is Map<String, dynamic> && bodyJson['id'] != null) {
+            SharedDataService().addExternalPickup(bodyJson);
+          } else {
+            // fallback: server did not send full object, construct minimal entry
+            final id = bodyJson['pickupId']?.toString() ?? 'job_${DateTime.now().millisecondsSinceEpoch}';
+            SharedDataService().addExternalPickup({
+              'id': id,
+              'category': wasteType,
+              'quantityRange': quantity,
+              'lga': location,
+              'createdAt': DateTime.now().toIso8601String(),
+            });
+          }
+        } catch (_) {}
+        return bodyJson;
       }
       // If status is not 200, we intentionally fall through to the catch block
       // or explicitly throw to trigger fallback.
       throw Exception('Live API failed');
     } catch (e) {
       // 2. Fallback to Local SharedDataService
-      debugPrint('Live API failed (), using local fallback.');
+      debugPrint('Live API failed ($e), using local fallback.');
       
       final smeName = await SecureStorageService().getUserName() ?? 'Unknown SME';
       final jobId = SharedDataService().createPickupRequest(
@@ -225,12 +292,36 @@ class ApiService {
     }
   }
 
-  /// Get all jobs available for collectors
-  Future<List<PickupJob>> getAvailableJobs() async {
-    // For now, we just use local because the live API endpoint might not match our model perfectly yet.
-    // But you could wrap this in try/catch too.
-    await Future.delayed(const Duration(milliseconds: 500)); 
-    return SharedDataService().getAvailableJobs();
+  /// Fetch list of available waste items for collectors from backend - filters to pending only
+  Future<List<Map<String, dynamic>>> getAvailableWaste() async {
+    try {
+      final token = await SecureStorageService().getAuthToken();
+      final url = Uri.parse('$baseUrl/pickup/available-waste');
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List) {
+          // Filter to only pending jobs
+          final pending = data
+              .where((job) => (job['status'] ?? '').toString().toLowerCase() == 'pending')
+              .toList();
+          return List<Map<String, dynamic>>.from(pending);
+        }
+      } else {
+        debugPrint('getAvailableWaste: unexpected status ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('getAvailableWaste: error $e');
+    }
+    // fall back to empty list
+    return [];
   }
 
   /// Get a single job's details by its ID

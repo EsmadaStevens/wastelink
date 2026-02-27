@@ -47,3 +47,8 @@ app.*.map.json
 # Secrets and Environment Variables
 .env*
 *-local
+
+lib/services/api_service.dart
+lib/services/auth_service.dart
+lib/services/secure_storage_service.dart
+lib/services/shared_data_service.dart

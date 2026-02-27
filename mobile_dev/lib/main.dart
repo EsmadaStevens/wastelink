@@ -25,6 +25,7 @@ import 'pages/collector/collector_job_accepted_screen.dart';
 import 'pages/collector/collector_navigation_screen.dart';
 import 'pages/collector/collector_pickup_confirmation_screen.dart';
 import 'pages/collector/collector_notifications_screen.dart';
+import 'pages/collector/collector_available_jobs_screen.dart';
 
 Future<void> main() async {
   // Load environment variables
@@ -78,6 +79,7 @@ class WasteLinkApp extends StatelessWidget {
         '/collector_navigation': (context) => const CollectorNavigationScreen(),
         '/collector_pickup_confirmation': (context) => const CollectorPickupConfirmationScreen(),
         '/collector_notifications': (context) => const CollectorNotificationsScreen(),
+        '/colletor_available_jobs_screen': (context) => const CollectorAvailableJobsScreen(),
       },
     );
   }
