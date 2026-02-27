@@ -1,47 +1,29 @@
-"use strict";
+'use strict';
 
 module.exports = (sequelize, DataTypes) => {
-  const PickupRequest = sequelize.define(
-    "PickupRequest",
-    {
-      id: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
-        primaryKey: true,
-        allowNull: false,
-      },
-      WasteLogId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-      },
-      collectorId: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-      },
-      status: {
-        type: DataTypes.ENUM("pending", "accepted", "collected", "cancelled"),
-        defaultValue: "pending",
-      },
-      scheduledAt: {
-        type: DataTypes.DATE,
-        allowNull: true,
-      },
+  const PickupRequest = sequelize.define('PickupRequest', {
+
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true
     },
-    {
-      tableName: "PickupRequests",
-      timestamps: true,
-    },
-  );
+
+    status: {
+      type: DataTypes.STRING,
+      defaultValue: 'pending'
+    }
+
+  });
 
   PickupRequest.associate = (models) => {
     PickupRequest.belongsTo(models.WasteLog, {
-      foreignKey: "WasteLogId",
-      as: "wasteLog",
+      foreignKey: 'WasteLogId'
     });
 
     PickupRequest.belongsTo(models.User, {
-      foreignKey: "collectorId",
-      as: "collector",
+      foreignKey: 'collectorId',
+      as: 'collector'
     });
   };
 
