@@ -48,6 +48,7 @@ app.*.map.json
 .env*
 *-local
 
+# Sensitive service/config files
 lib/services/api_service.dart
 lib/services/auth_service.dart
 lib/services/secure_storage_service.dart
