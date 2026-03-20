@@ -1,28 +1,40 @@
-'use strict';
-const {
-  Model
-} = require('sequelize');
+"use strict";
+
 module.exports = (sequelize, DataTypes) => {
-  class WasteLog extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
-    static associate(models) {
-      // define association here
-    }
-  }
-  WasteLog.init({
-    userId: DataTypes.INTEGER,
-    category: DataTypes.STRING,
-    volume: DataTypes.STRING,
-    photoUrl: DataTypes.STRING,
-    status: DataTypes.STRING,
-    valueEstimate: DataTypes.FLOAT
-  }, {
-    sequelize,
-    modelName: 'WasteLog',
+  const WasteLog = sequelize.define("WasteLog", {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+
+    wasteType: DataTypes.STRING,
+    volume: {
+      type: DataTypes.ENUM("low", "medium", "high", "veryhigh"),
+      allowNull: false,
+    },
+
+    status: {
+      type: DataTypes.STRING,
+      defaultValue: "pending",
+    },
+    quantityRange: DataTypes.STRING,
+    lga: DataTypes.STRING,
+    imageUrl: DataTypes.STRING,
+    aiPrediction: DataTypes.STRING,
+    aiConfidence: DataTypes.FLOAT,
+    estimatedValue: DataTypes.FLOAT,
   });
+
+  WasteLog.associate = (models) => {
+    WasteLog.belongsTo(models.User, {
+      foreignKey: "userId",
+    });
+
+    WasteLog.hasOne(models.PickupRequest, {
+      foreignKey: "WasteLogId",
+    });
+  };
+
   return WasteLog;
 };

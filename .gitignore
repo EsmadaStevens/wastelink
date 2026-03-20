@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ### Dart ###
 # See https://www.dartlang.org/guides/libraries/private-files
 
@@ -467,5 +468,7 @@ fabric.properties
 ### AndroidStudio Patch ###
 
 !/gradle/wrapper/gradle-wrapper.jar
+=======
+>>>>>>> 4cb3dfb46d2827f84a46fd7a591aae6cfaa471d4
 node_modules
 .env
