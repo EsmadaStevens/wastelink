@@ -145,10 +145,14 @@ class _CollectorJobDetailsScreenState extends State<CollectorJobDetailsScreen> {
     final aiPrediction = job['aiPrediction'] ?? 'N/A';
     final aiConfidence = job['aiConfidence'] != null ? '${(job['aiConfidence'] * 100).toStringAsFixed(1)}%' : 'N/A';
     final lga = job['lga'] ?? job['distance'] ?? 'N/A';
+
+
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _buildPhotoSection(const Color(0xFF0D5D46), job),
+        const SizedBox(height: 24),
         const Text('Waste Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
         Container(
@@ -188,9 +192,9 @@ class _CollectorJobDetailsScreenState extends State<CollectorJobDetailsScreen> {
 
   Widget _buildPhotoSection(Color primaryColor, Map<String, dynamic> job) {
     const String baseUrl = 'https://wastelink-production.up.railway.app/api';
-    String? imageUrl = job['imageUrl'];
-    if (imageUrl != null && !imageUrl.startsWith('http')) {
-      imageUrl = imageUrl.startsWith('/') ? baseUrl + imageUrl : baseUrl + '/' + imageUrl;
+    String? imageUrl = job['imageUrl'] ?? job['photoUrl'];
+   if (imageUrl != null && !imageUrl.startsWith('http')) {
+      imageUrl = imageUrl.startsWith('/') ? '$baseUrl$imageUrl' : '$baseUrl/$imageUrl';
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

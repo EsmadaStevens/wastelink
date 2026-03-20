@@ -69,7 +69,7 @@ class _CollectorAvailableJobsScreenState extends State<CollectorAvailableJobsScr
           'businessName': job.smeName,
           'lga': job.location ?? '',
           'aiPrediction': job.aiPrediction ?? '',
-          'aiConfidence': job.aiConfidence ?? null,
+          'aiConfidence': job.aiConfidence ?? null,          
         }).toList();
       // Merge backend and local jobs, avoiding duplicates by id
       final allJobs = <Map<String, dynamic>>[];
