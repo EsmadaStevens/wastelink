@@ -7,6 +7,7 @@ const testRoute = require("../src/routes/testRoute");
 
 
 app.use(express.json());
+app.use("/uploads", require("express").static("/uploads"));
 //base url for auth routes
 app.use('/api/auth', authRoutes);
 //base url for waste log routes
